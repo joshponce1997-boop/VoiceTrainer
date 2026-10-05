@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#080b10" />
+  <meta name="description" content="Mobile-first voice training rhythm game" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/icon-192.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <title>Regal Voice Trainer</title>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">VOICE RHYTHM TRAINING</div>
+        <h1>Regal Voice Trainer</h1>
+      </div>
+      <button id="installBtn" class="ghost hidden">Install</button>
+    </header>
+
+    <main>
+      <section id="homeScreen" class="screen active">
+        <div class="hero card">
+          <div>
+            <span class="badge">Default profile</span>
+            <h2 id="profileTitle">Regal Professional</h2>
+            <p>Clear articulation, deliberate pace, certainty, controlled inflection, and natural presence.</p>
+          </div>
+          <div class="score-orb">
+            <span id="homeNaturalness">--</span>
+            <small>Naturalness avg</small>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <button id="dailyBtn" class="big action">Daily Training <span>10–15 min adaptive set</span></button>
+          <button id="quickBtn" class="big">Quick Exercise <span>30–90 sec rhythm round</span></button>
+          <button id="mimicBtn" class="big">Mimic Mode <span>Hear → repeat → compare</span></button>
+          <button id="calibrateBtn" class="big">Voice Calibration <span id="calibrationState">Not calibrated</span></button>
+        </div>
+
+        <div class="card settings-card">
+          <div class="row between">
+            <div>
+              <h3>Regality</h3>
+              <p class="muted">Useful range for daily speech: 40–60</p>
+            </div>
+            <strong id="regalityValue">50</strong>
+          </div>
+          <input id="regalitySlider" type="range" min="0" max="100" value="50" />
+          <div class="slider-labels"><span>Casual</span><span>Professional</span><span>Distinguished</span><span>Regal</span><span>Theatrical</span></div>
+          <div id="regalityWarning" class="notice hidden">High regality raises theatricality risk. Naturalness remains the balancing score.</div>
+        </div>
+
+        <div class="card">
+          <div class="row between"><h3>Training profile</h3><button id="profilesBtn" class="ghost">Change</button></div>
+          <div id="profileChips" class="chips"></div>
+        </div>
+
+        <div class="card">
+          <div class="row between"><h3>Drills</h3><button id="allDrillsBtn" class="ghost">See all</button></div>
+          <div id="drillGrid" class="drill-grid"></div>
+        </div>
+
+        <div class="card">
+          <div class="row between"><h3>Progress</h3><button id="resetProgressBtn" class="danger ghost">Reset</button></div>
+          <canvas id="progressChart" width="900" height="280" aria-label="Score history chart"></canvas>
+          <div id="progressStats" class="stat-grid"></div>
+          <p id="weakestSkill" class="notice">Complete an exercise to get an adaptive recommendation.</p>
+        </div>
+      </section>
+
+      <section id="setupScreen" class="screen">
+        <button class="back ghost" data-back>← Back</button>
+        <div class="card">
+          <h2>Exercise Setup</h2>
+          <label>Mode<select id="modeSelect"></select></label>
+          <label>Difficulty<select id="difficultySelect"><option>Easy</option><option selected>Medium</option><option>Hard</option><option>Expert</option></select></label>
+          <label>Length<select id="lengthSelect"><option value="30">30 seconds</option><option value="45" selected>45 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option></select></label>
+          <label>Target corridor width<select id="corridorSelect"><option value="" selected>Auto by difficulty</option><option value="350">Very wide (±350 cents)</option><option value="250">Wide (±250 cents)</option><option value="150">Focused (±150 cents)</option><option value="90">Tight (±90 cents)</option></select></label>
+          <p class="muted tiny">Normal training follows relative pitch shape and inflection. It does not require you to hit an exact musical note.</p>
+          <label>Scoring strictness<select id="strictnessSelect"><option value="0.8">Forgiving</option><option value="1" selected>Standard</option><option value="1.25">Strict</option></select></label>
+          <button id="startExerciseBtn" class="action full">Start</button>
+        </div>
+      </section>
+
+      <section id="calibrationScreen" class="screen">
+        <button class="back ghost" data-back>← Back</button>
+        <div class="card center">
+          <h2>Voice Calibration</h2>
+          <p>Speak naturally. Do not deepen or perform. The app measures your comfortable voiced pitch and loudness baseline.</p>
+          <div id="calibrationPrompt" class="prompt">“I am speaking in my normal conversational voice, at an easy and comfortable pace.”</div>
+          <div class="meter"><div id="calibrationMeter"></div></div>
+          <div class="live-readout"><span><b id="calPitch">--</b> Hz<small>pitch</small></span><span><b id="calVolume">--</b><small>level</small></span></div>
+          <button id="beginCalibrationBtn" class="action full">Begin 12-second calibration</button>
+          <p class="muted tiny">Safety: if your throat feels tight, scratchy, painful, or pressured, stop and return to your natural voice.</p>
+        </div>
+      </section>
+
+      <section id="gameScreen" class="screen game-screen">
+        <div class="game-top">
+          <button id="exitGameBtn" class="ghost">Exit</button>
+          <div><span id="gameModeLabel" class="badge">Regal Professional</span><strong id="gameTimer">0:45</strong></div>
+          <div class="combo"><small>COMBO</small><b id="comboValue">x0</b></div>
+        </div>
+        <div id="currentSentence" class="sentence">Prepare...</div>
+        <div class="game-stage">
+          <canvas id="gameCanvas"></canvas>
+          <div class="pitch-guide"><b id="pitchGuideTitle">PITCH / INFLECTION</b><span id="pitchGuideText">Follow the shape, not an exact musical note.</span></div>
+          <div class="trace-legend"><span class="target-key">Target</span><span class="voice-key">Your voice</span><b id="liveHz">-- Hz</b></div>
+          <div id="feedbackPill" class="feedback">READY</div>
+          <div class="mic-indicator"><span id="micDot"></span><span id="micText">Mic idle</span></div>
+        </div>
+        <div class="live-scores">
+          <div><span>Contour</span><b id="pitchLive">--</b></div>
+          <div><span>Timing</span><b id="timingLive">--</b></div>
+          <div><span>Natural</span><b id="naturalLive">--</b></div>
+          <div><span>Score</span><b id="totalLive">0</b></div>
+        </div>
+      </section>
+
+      <section id="mimicScreen" class="screen">
+        <button class="back ghost" data-back>← Back</button>
+        <div class="card center">
+          <span class="badge">MIMIC MODE</span>
+          <h2 id="mimicSentence">There is only one reasonable conclusion.</h2>
+          <p>Listen once, then reproduce the delivery. The reference is synthesized and original—not a character or actor voice.</p>
+          <div class="row center gap"><button id="playReferenceBtn" class="big-inline">▶ Hear example</button><button id="newMimicBtn" class="ghost">New sentence</button></div>
+          <canvas id="mimicCanvas" width="1000" height="380"></canvas>
+          <p class="muted tiny">Green = target shape. Blue = your relative contour. Timing starts on your first detected voiced sound so both traces begin together.</p>
+          <button id="startMimicBtn" class="action full">3 · 2 · 1 · Repeat</button>
+          <div id="mimicResult" class="hidden"></div>
+        </div>
+      </section>
+
+      <section id="resultScreen" class="screen">
+        <div class="card result-card">
+          <div class="grade"><span id="overallScore">90</span><small id="overallGrade">A</small></div>
+          <h2>Voice Score</h2>
+          <div id="scoreRows" class="score-rows"></div>
+          <div id="resultFeedback" class="notice"></div>
+          <div class="row gap"><button id="againBtn" class="action grow">Train Again</button><button id="homeBtn" class="ghost grow">Home</button></div>
+        </div>
+      </section>
+
+      <section id="settingsScreen" class="screen">
+        <button class="back ghost" data-back>← Back</button>
+        <div class="card"><h2>Settings & Analysis</h2>
+          <label>Microphone<select id="micSelect"><option value="">Default microphone</option></select></label>
+          <label><input id="sfxToggle" type="checkbox" checked /> Sound effects</label>
+          <label><input id="countdownToggle" type="checkbox" checked /> Countdown</label>
+          <label>Visual sensitivity<input id="visualSensitivity" type="range" min="50" max="150" value="100" /></label>
+          <div class="notice"><b>What works locally:</b> pitch, pitch stability, pitch range, volume/RMS, cadence proxies, target timing, inflection contour, pauses, emphasis proxies, combo/scoring, calibration, progress. <b>Browser-dependent:</b> speech recognition for words, filler detection, and transcript-based pronunciation. Those features are marked as estimates when recognition is unavailable.</div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button data-nav="homeScreen" class="active">Home</button>
+      <button data-nav="setupScreen">Train</button>
+      <button data-nav="mimicScreen">Mimic</button>
+      <button data-nav="settingsScreen">Settings</button>
+    </nav>
+  </div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
